@@ -22,9 +22,16 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-
+    const database = client.db('coffeeDB')
+    const coffeeCollection = database.collection('coffees')
     
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // Post a single coffee
+    app.post('/add-coffee', async (req, res) => {
+        const coffee = req.body
+        const result = await coffeeCollection.insertOne(coffee)
+        res.send(result)
+    })
+    console.log("Pinged your deployment. You successfully connected to MongoDB!")
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
