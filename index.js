@@ -22,8 +22,56 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
+    // Database Name
     const database = client.db("coffeeDB");
+    // Coffees Collection
     const coffeeCollection = database.collection("coffees");
+    // Users Collection
+    const usersCollection = database.collection("users");
+
+    // Post a single user
+    app.post("/add-user", async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+    // Get all users
+    app.get("/users", async (req, res) => {
+      const cursor = usersCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    // Get a single User
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+    // Put a single User
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const user = req.body;
+      const options = { upsert: true };
+      const updatedUser = {
+        $set: {
+            name: user.name,
+            email: user.email,
+            password: user.password,
+            photoURL: user.photoURL
+        }
+      }
+      const result = await usersCollection.updateOne(query, updatedUser, options)
+      res.send(result)
+    });
+    // Delete a single user
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Post a single coffee
     app.post("/add-coffee", async (req, res) => {
@@ -52,17 +100,21 @@ async function run() {
       const options = { upsert: true };
       const updatedCoffee = {
         $set: {
-            coffeeName: coffee.coffeeName,
-            coffeeChef: coffee.coffeeChef,
-            coffeeSupplier: coffee.coffeeSupplier,
-            coffeeTaste: coffee.coffeeTaste,
-            coffeeCategory: coffee.coffeeCategory,
-            coffeeDetails: coffee.coffeeDetails,
-            coffeePhoto: coffee.coffeePhoto
-        }
-      }
-      const result = await coffeeCollection.updateOne(filter, updatedCoffee, options)
-      res.send(result)
+          coffeeName: coffee.coffeeName,
+          coffeeChef: coffee.coffeeChef,
+          coffeeSupplier: coffee.coffeeSupplier,
+          coffeeTaste: coffee.coffeeTaste,
+          coffeeCategory: coffee.coffeeCategory,
+          coffeeDetails: coffee.coffeeDetails,
+          coffeePhoto: coffee.coffeePhoto,
+        },
+      };
+      const result = await coffeeCollection.updateOne(
+        filter,
+        updatedCoffee,
+        options
+      );
+      res.send(result);
     });
     // Delete a single coffee
     app.delete("/coffees/:id", async (req, res) => {
